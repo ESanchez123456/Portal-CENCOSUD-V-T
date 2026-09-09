@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte CENCOSUD · Vinatea &amp; Toyama</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg:#f7f8fb;          /* fondo de página */
+    --card:#ffffff;        /* tarjetas */
+    --border:#ebedf3;      /* bordes de tarjeta (gris Metronic/MyBig) */
+    --ink:#181c32;         /* texto principal */
+    --ink-soft:#7e8299;    /* texto secundario (gris MyBig) */
+    --gold:#1BC5BD;        /* acento principal (antes dorado V&T, ahora teal MyBig) */
+    --gold-soft:#e7fbfa;
+    --nav:#000000;         /* barra superior, negro puro MyBig */
+    --purple:#8950FC; --purple-bg:#f3ecff;  /* acento secundario (botón "Acciones" en MyBig) */
+    --ok:#1BC5BD; --ok-bg:#e7fbfa;          /* teal, ACTIVO en MyBig */
+    --amber:#FFA800; --amber-bg:#fff4e0;    /* PROCESAL / EJECUCIÓN en MyBig */
+    --blue:#3699FF; --blue-bg:#e1f0ff;      /* azul de enlaces MyBig */
+    --gray-pill:#464E5F; --gray-pill-bg:#ebedf3; /* REMOTA en MyBig */
+    --danger:#F64E60; --danger-bg:#ffe2e5;  /* DE BAJA en MyBig */
+    --link:#3699FF;
+    --sans:"Poppins","Segoe UI","Helvetica Neue",Arial,sans-serif;
+    --shadow:0 1px 2px rgba(24,28,50,.04),0 6px 16px rgba(24,28,50,.06);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;}
+  a{color:inherit;}
+
+  /* ---------- header: una sola barra negra, estilo MyBig ---------- */
+  header.app-header{
+    background:var(--nav);color:#fff;
+    display:flex;align-items:center;gap:26px;
+    padding:0 22px;height:56px;
+  }
+  header.app-header .brand{display:flex;align-items:center;gap:10px;}
+  .brand .logo{
+    width:32px;height:32px;background:var(--gold);color:#ffffff;
+    display:flex;align-items:center;justify-content:center;border-radius:7px;
+    font-weight:800;font-size:12.5px;letter-spacing:.02em;
+  }
+  .brand .name{font-weight:700;font-size:14px;line-height:1.15;}
+  .brand .caption{font-size:10px;letter-spacing:.05em;color:#9aa1b0;text-transform:uppercase;}
+  header.app-header .title{display:none;} /* el título ahora vive en la franja de contexto */
+  .pill{
+    border:1px solid #3a3c46;color:#c7cad4;border-radius:999px;
+    padding:5px 14px;font-size:11.5px;letter-spacing:.02em;
+  }
+
+  /* ---------- tabs: pastillas dentro de la misma barra negra ---------- */
+  nav.tabs{
+    display:flex;gap:4px;margin-left:6px;
+  }
+  nav.tabs .tab{
+    color:#9aa1b0;padding:8px 16px;font-size:12.5px;font-weight:600;border-radius:8px;
+    cursor:pointer;display:flex;align-items:center;gap:7px;user-select:none;
+  }
+  nav.tabs .tab:hover{color:#e4e6ec;}
+  nav.tabs .tab.active{color:#14151b;background:#fff;}
+  nav.tabs .tab .count{
+    background:#dc2626;color:#fff;border-radius:999px;font-size:10px;
+    padding:1px 6px;font-weight:700;
+  }
+  nav.tabs .tab.disabled{color:#4b4e58;opacity:.5;cursor:default;}
+
+  /* ---------- franja de contexto (antes "subbar") ---------- */
+  .subbar{
+    background:var(--card);color:var(--ink);border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 22px;font-size:12.5px;
+  }
+  .subbar .left{display:flex;align-items:center;gap:10px;}
+  .subbar .left::before{content:"Reporte CENCOSUD";font-weight:700;font-size:14.5px;color:var(--ink);margin-right:6px;}
+  .subbar select, .subbar .fake-select{
+    background:#f6f7fa;color:var(--ink);border:1px solid var(--border);border-radius:6px;
+    padding:6px 12px;font-size:12.5px;min-width:220px;
+  }
+  .badge-gold{
+    background:var(--ok-bg);color:var(--ok);border-radius:999px;
+    padding:5px 12px;font-size:11px;font-weight:700;letter-spacing:.02em;
+    display:inline-flex;align-items:center;gap:5px;
+  }
+  .subbar .right{color:var(--ink-soft);font-size:12px;}
+
+  /* ---------- content ---------- */
+  .content{max-width:1600px;margin:0 auto;padding:28px 32px 90px;}
+
+  .upload-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;max-width:820px;}
+  .upcard{
+    background:var(--card);border:1.5px dashed var(--border);border-radius:10px;
+    padding:10px 14px 12px;text-align:left;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s;
+    position:relative;box-shadow:var(--shadow);
+    display:grid;grid-template-columns:22px 1fr;grid-template-rows:auto auto auto auto;
+    column-gap:9px;row-gap:0;align-items:start;
+  }
+  .upcard:hover{border-color:#b7bccb;}
+  .upcard.dragging{border-color:var(--gold);background:var(--gold-soft);}
+  .upcard.filled{border-style:solid;border-color:var(--ok);background:var(--ok-bg);}
+  .upcard input{display:none;}
+  .upcard .icon{grid-column:1;grid-row:2/5;font-size:18px;align-self:start;margin:1px 0 0;}
+  .upcard h3{grid-column:2;grid-row:2;margin:0;font-size:12.5px;color:var(--ink);font-weight:700;}
+  .upcard .sub{grid-column:2;grid-row:3;font-size:10.5px;color:var(--link);font-style:italic;line-height:1.35;margin-top:2px;}
+  .upcard .sub em{font-style:italic;}
+  .upcard .filename{grid-column:2;grid-row:4;font-size:10px;color:var(--ok);font-weight:700;margin-top:4px;word-break:break-all;}
+  .upcard .opt-tag{
+    grid-column:1/3;grid-row:1;font-size:8.5px;color:#9aa3b5;
+    text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;
+  }
+
+  .action-center{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:36px;}
+  button#generar{
+    background:var(--gold);color:#ffffff;border:none;border-radius:9px;
+    padding:13px 34px;font-size:14px;font-weight:700;cursor:pointer;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);transition:transform .1s, background .15s;
+  }
+  button#generar:hover:not(:disabled){background:#17a79f;}
+  button#generar:active:not(:disabled){transform:translateY(1px);}
+  button#generar:disabled{background:#cfd2db;color:#8b8f9c;cursor:not-allowed;box-shadow:none;}
+  #status{font-size:12.5px;color:var(--ink-soft);}
+  #status.err{color:var(--danger);font-weight:600;}
+
+  /* ---------- resultados ---------- */
+  section#resultado{display:none;}
+  .panel-title{
+    font-size:13px;font-weight:700;color:var(--ink);text-transform:uppercase;
+    letter-spacing:.04em;margin:0 0 14px;display:flex;align-items:center;gap:8px;
+  }
+  .panel-title::before{content:"";width:4px;height:16px;background:var(--gold);border-radius:2px;}
+
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px;}
+  .summary .cell{
+    background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;
+    box-shadow:var(--shadow);border-left:3px solid transparent;
+  }
+  .summary .cell .num{font-size:26px;color:var(--ink);font-weight:800;}
+  .summary .cell .lbl{font-size:11px;color:#8a92a6;text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+  .summary .cell.clickable{cursor:pointer;transition:border-color .15s,background .15s,transform .1s;user-select:none;}
+  .summary .cell.clickable:hover{border-color:#c3c8d6;}
+  .summary .cell.clickable:active{transform:translateY(1px);}
+  .summary .cell.clickable.active{border-left-color:var(--gold);background:var(--gold-soft);}
+  .summary .cell.clickable.active .num{color:var(--ink);}
+  .summary .cell.clickable.active .lbl{color:#8a6a12;}
+
+
+
+  .filterbar{
+    background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:18px;
+    display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;
+    position:sticky;top:0;z-index:5;box-shadow:var(--shadow);
+  }
+  .filterbar .f{display:flex;flex-direction:column;gap:5px;}
+  .filterbar label{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#8a92a6;font-weight:600;}
+  .filterbar select, .filterbar input[type=text], .filterbar input[type=number]{
+    font-family:var(--sans);font-size:12.5px;padding:7px 9px;border:1px solid var(--border);border-radius:6px;
+    background:#f8f9fc;min-width:130px;color:var(--ink);
+  }
+  .filterbar input[type=number]{min-width:90px;}
+  .filterbar .f.grow{flex:1;min-width:180px;}
+  .filterbar .f.grow input{width:100%;}
+  .filterbar .rango{display:flex;gap:6px;align-items:center;}
+  .filterbar .rango span{color:#a19a86;font-size:11px;}
+  .filterbar button#limpiar{
+    background:#f1f2f6;border:1px solid var(--border);border-radius:7px;padding:8px 14px;font-size:12px;
+    cursor:pointer;color:var(--ink-soft);font-family:var(--sans);font-weight:600;
+  }
+  .filterbar button#limpiar:hover{border-color:var(--danger);color:var(--danger);}
+  .filter-count{font-size:12px;color:var(--ink-soft);margin-left:auto;align-self:center;font-weight:600;}
+
+  /* ---------- multi-select ---------- */
+  .multiselect{position:relative;}
+  .ms-toggle{
+    font-family:var(--sans);font-size:12.5px;padding:7px 28px 7px 10px;border:1px solid var(--border);
+    border-radius:6px;background:#f8f9fc url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M0 0l5 6 5-6z" fill="%238a92a6"/></svg>') no-repeat right 10px center;
+    min-width:130px;text-align:left;color:var(--ink);cursor:pointer;
+  }
+  .ms-toggle:hover{border-color:#b7bccb;}
+  .multiselect.has-selection .ms-toggle{border-color:var(--gold);background-color:var(--gold-soft);font-weight:700;color:var(--ink);}
+  .ms-panel{
+    position:absolute;top:calc(100% + 4px);left:0;z-index:20;background:#fff;border:1px solid var(--border);
+    border-radius:8px;box-shadow:0 6px 18px rgba(20,30,50,.14);min-width:220px;max-height:260px;overflow-y:auto;
+    padding:6px 0;
+  }
+  .ms-panel label.ms-opt{
+    display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;white-space:nowrap;
+  }
+  .ms-panel label.ms-opt:hover{background:#f4f6fa;}
+  .ms-panel input[type=checkbox]{accent-color:var(--gold);}
+  .ms-panel .ms-empty{padding:8px 12px;font-size:12px;color:#a1a8b6;}
+
+  .download-row{
+    display:flex;justify-content:flex-end;align-items:center;
+    background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 20px;margin-bottom:22px;
+    box-shadow:var(--shadow);
+  }
+  a#descargar{
+    background:var(--gold);color:#ffffff;text-decoration:none;padding:11px 22px;border-radius:8px;
+    font-size:13px;font-weight:700;
+  }
+  a#descargar:hover{background:#17a79f;}
+
+  .preview-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px;max-height:520px;background:var(--card);box-shadow:var(--shadow);}
+  table.preview{border-collapse:collapse;width:100%;font-size:11.5px;}
+  table.preview th{
+    position:sticky;top:0;background:#f8f9fc;color:#5a6072;text-align:center;
+    padding:9px 10px;white-space:nowrap;font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;
+    border-bottom:1px solid var(--border);
+  }
+  table.preview td{padding:7px 10px;border-bottom:1px solid #eef0f4;white-space:nowrap;text-align:center;}
+  /* Columna de comentarios (primera, fija): sin encabezado de texto, angosta */
+  table.preview th:nth-child(1), table.preview td:nth-child(1){ max-width:40px;padding-left:6px;padding-right:6px; }
+  .btn-comentario{
+    position:relative;border:1px solid var(--border);background:#fff;border-radius:7px;
+    width:28px;height:28px;font-size:13px;cursor:pointer;line-height:1;color:#9aa1b0;
+  }
+  .btn-comentario:hover{border-color:#b7bccb;}
+  .btn-comentario.has-pending{border-color:var(--amber);background:var(--amber-bg);}
+  .btn-comentario.has-done{border-color:var(--ok);background:var(--ok-bg);}
+  .btn-comentario .badge-count{
+    position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;font-size:9px;font-weight:700;
+    border-radius:999px;min-width:15px;height:15px;line-height:15px;padding:0 3px;
+  }
+  .btn-comentario.has-done .badge-count{background:var(--ok);}
+  /* CONTRAPARTE: un poco más ancha para que se lea el nombre completo (o casi) */
+  table.preview th:nth-child(4), table.preview td:nth-child(4){
+    max-width:200px;
+  }
+  /* columnas comprimidas: los 3 bloques de monto de sentencia (una por instancia; muy anchas por defecto) */
+  table.preview th:nth-child(28), table.preview td:nth-child(28),
+  table.preview th:nth-child(29), table.preview td:nth-child(29),
+  table.preview th:nth-child(30), table.preview td:nth-child(30){
+    max-width:110px;
+  }
+  /* Vía procesal / Submateria: angostas, con salto de línea */
+  table.preview th:nth-child(2), table.preview td:nth-child(2),
+  table.preview th:nth-child(8), table.preview td:nth-child(8){
+    max-width:140px;white-space:normal;line-height:1.25;
+  }
+  /* Expediente: ancho fijo, con tooltip si se corta */
+  table.preview th:nth-child(10), table.preview td:nth-child(10){
+    max-width:160px;
+  }
+  /* Observaciones / Resumen de pagos / Causas relacionadas: más anchas, con salto de línea (texto libre) */
+  table.preview th:nth-child(13), table.preview td:nth-child(13),
+  table.preview th:nth-child(21), table.preview td:nth-child(21),
+  table.preview th:nth-child(26), table.preview td:nth-child(26){
+    max-width:200px;white-space:normal;line-height:1.25;
+  }
+  table.preview td:nth-child(4), table.preview td:nth-child(10),
+  table.preview td:nth-child(28), table.preview td:nth-child(29), table.preview td:nth-child(30){
+    overflow:hidden;text-overflow:ellipsis;
+  }
+  table.preview th:nth-child(4), table.preview th:nth-child(10),
+  table.preview th:nth-child(28), table.preview th:nth-child(29), table.preview th:nth-child(30){
+    white-space:normal;line-height:1.25;
+  }
+  table.preview tbody tr{cursor:pointer;}
+  table.preview tr:not(.row-selected):hover td{background:#f7f8fb;}
+  table.preview tr.row-selected td{background:var(--blue-bg) !important;}
+  table.preview tr.row-selected td:nth-child(2){box-shadow:inset 3px 0 0 var(--blue);}
+  td.changed{background:var(--gold-soft) !important;font-weight:700;}
+  td.neg-provision{background:var(--danger-bg) !important;color:var(--danger);font-weight:700;}
+
+  /* ---------- badges tipo píldora (estilo MyBig) para Status / Situación ---------- */
+  .badge-pill{
+    display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;
+    font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap;
+  }
+  .badge-pill.giro{background:var(--ok-bg);color:var(--ok);}
+  .badge-pill.ejec{background:var(--amber-bg);color:var(--amber);}
+  .badge-pill.status{background:var(--gray-pill-bg);color:var(--gray-pill);}
+  .badge-pill.probable{background:var(--danger-bg);color:var(--danger);}
+  .badge-pill.posible{background:var(--ok-bg);color:var(--ok);}
+  .badge-pill.remota{background:var(--blue-bg);color:var(--blue);}
+
+  /* ---------- modal de comentarios/observaciones ---------- */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(20,22,30,.5);z-index:100;
+    align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:#fff;border-radius:12px;width:100%;max-width:480px;max-height:80vh;
+    display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(20,22,30,.25);
+  }
+  .modal-header{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+    padding:16px 18px;border-bottom:1px solid var(--border);
+  }
+  .modal-title{font-weight:700;font-size:14px;color:var(--ink);}
+  .modal-sub{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .modal-close{background:none;border:none;font-size:15px;color:#9aa1b0;cursor:pointer;line-height:1;padding:2px;}
+  .modal-close:hover{color:var(--ink);}
+  .modal-body{padding:16px 18px;overflow-y:auto;}
+  .mc-item{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12.5px;}
+  .mc-item .mc-texto{color:var(--ink);white-space:pre-wrap;}
+  .mc-item .mc-item-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;}
+  .mc-item .mc-fecha{font-size:10.5px;color:#9aa1b0;}
+  .mc-estado{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;}
+  .mc-estado.pendiente{background:var(--amber-bg);color:var(--amber);}
+  .mc-estado.hecho{background:var(--blue-bg);color:var(--blue);}
+  .mc-empty{font-size:12px;color:#9aa1b0;padding:6px 0 14px;}
+  .mc-nuevo{border-top:1px solid var(--border);padding-top:12px;margin-top:4px;display:flex;flex-direction:column;gap:8px;}
+  .mc-nuevo textarea{
+    font-family:var(--sans);font-size:12.5px;border:1px solid var(--border);border-radius:8px;padding:9px 10px;
+    resize:vertical;color:var(--ink);
+  }
+  .btn-primary-sm{
+    background:var(--gold);color:#fff;border:none;border-radius:7px;padding:9px 14px;font-size:12.5px;
+    font-weight:700;cursor:pointer;align-self:flex-start;font-family:var(--sans);
+  }
+  .btn-primary-sm:hover{background:#17a79f;}
+
+  /* ---------- pestaña Paralegal ---------- */
+  #tabla-paralegal{table-layout:fixed;}
+  #paralegal-panel table.preview th{text-align:left;}
+  #paralegal-panel table.preview td{text-align:left;overflow:hidden;text-overflow:ellipsis;}
+  #tabla-paralegal th:nth-child(1), #tabla-paralegal td:nth-child(1){width:14%;}
+  #tabla-paralegal th:nth-child(2), #tabla-paralegal td:nth-child(2){width:16%;}
+  #tabla-paralegal th:nth-child(3), #tabla-paralegal td:nth-child(3){width:32%;white-space:normal;overflow:visible;text-overflow:clip;}
+  #tabla-paralegal th:nth-child(4), #tabla-paralegal td:nth-child(4){width:13%;}
+  #tabla-paralegal th:nth-child(5), #tabla-paralegal td:nth-child(5){width:10%;}
+  #tabla-paralegal th:nth-child(6), #tabla-paralegal td:nth-child(6){width:15%;}
+  .pl-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:700;text-transform:uppercase;cursor:pointer;border:none;font-family:var(--sans);}
+  .pl-pill.pendiente{background:var(--amber-bg);color:var(--amber);}
+  .pl-pill.hecho{background:var(--ok-bg);color:var(--ok);}
+  .pl-del{background:none;border:none;color:#c3c8d6;cursor:pointer;font-size:13px;}
+  .pl-del:hover{color:var(--danger);}
+  .pl-ver{color:var(--link);font-size:11.5px;text-decoration:none;}
+
+  footer.notes{
+    margin:40px 0 0;font-size:11.5px;color:#8a92a6;line-height:1.65;
+    border-top:1px solid var(--border);padding-top:16px;
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <div class="logo">V&amp;T</div>
+    <div>
+      <div class="name">Vinatea &amp; Toyama</div>
+      <div class="caption">Paralegal Procesal</div>
+    </div>
+  </div>
+  <nav class="tabs">
+    <div class="tab active" id="tab-generador">⚡ Generar Reporte</div>
+    <div class="tab" id="tab-resultados">📊 Resultados</div>
+    <div class="tab" id="tab-paralegal">💬 Paralegal</div>
+  </nav>
+  <div style="margin-left:auto" class="pill">PROCESAL ↔ CENCOSUD</div>
+</header>
+
+<div class="subbar">
+  <div class="left">
+    <span>Cliente:</span>
+    <span class="fake-select">CENCOSUD RETAIL PERU S.A.</span>
+    <span class="badge-gold">⚡ Automático</span>
+  </div>
+  <div class="right">Reporte CENCOSUD · V&amp;T</div>
+</div>
+
+<div class="content">
+
+  <section id="generador">
+  <div class="upload-grid">
+    <label class="upcard" id="box-raw">
+      <span class="opt-tag">Paso 1 · obligatorio</span>
+      <div class="icon">📄</div>
+      <h3>Reporte total procesal</h3>
+      <div class="sub">Export crudo del sistema<br>(hoja <em>Reporte</em>)</div>
+      <div class="filename"></div>
+      <input type="file" id="file-raw" accept=".xlsx">
+    </label>
+
+    <label class="upcard" id="box-tpl">
+      <span class="opt-tag">Paso 2 · obligatorio</span>
+      <div class="icon">🗂️</div>
+      <h3>Templates.xlsx</h3>
+      <div class="sub">Cruce ID → N° Cencosud<br>(hoja <em>CENCOSUD</em>)</div>
+      <div class="filename"></div>
+      <input type="file" id="file-tpl" accept=".xlsx">
+    </label>
+
+    <label class="upcard" id="box-prev">
+      <span class="opt-tag">Paso 3 · opcional</span>
+      <div class="icon">🕓</div>
+      <h3>Reporte del mes anterior</h3>
+      <div class="sub">Resalta cambios de monto<br>(control interno)</div>
+      <div class="filename"></div>
+      <input type="file" id="file-prev" accept=".xlsx">
+    </label>
+  </div>
+
+  <div class="action-center">
+    <button id="generar" disabled>⚡ Generar Reporte</button>
+    <span id="status">Sube el reporte total y el Templates.xlsx para continuar.</span>
+  </div>
+  </section>
+
+  <section id="resultado">
+    <div class="panel-title">Resultados</div>
+    <div class="summary">
+      <div class="cell clickable" id="card-total" data-filter=""><div class="num" id="n-total">–</div><div class="lbl">Casos Cencosud (todos)</div></div>
+      <div class="cell clickable" id="card-giro" data-filter="GIRO"><div class="num" id="n-giro">–</div><div class="lbl">En giro</div></div>
+      <div class="cell clickable" id="card-ejec" data-filter="EJEC"><div class="num" id="n-ejec">–</div><div class="lbl">En ejecución</div></div>
+      <div class="cell clickable" id="card-sinid" data-filter="SINID"><div class="num" id="n-sinid">–</div><div class="lbl">Sin N° Cencosud</div></div>
+    </div>
+    <div class="filterbar">
+      <div class="f multiselect" id="ms-status">
+        <label>Status</label>
+        <button type="button" class="ms-toggle">Todos</button>
+        <div class="ms-panel" hidden></div>
+      </div>
+      <div class="f multiselect" id="ms-materia">
+        <label>Materia</label>
+        <button type="button" class="ms-toggle">Todas</button>
+        <div class="ms-panel" hidden></div>
+      </div>
+      <div class="f multiselect" id="ms-contingencia">
+        <label>Nivel de contingencia</label>
+        <button type="button" class="ms-toggle">Todos</button>
+        <div class="ms-panel" hidden></div>
+      </div>
+      <div class="f multiselect" id="ms-viaprocesal">
+        <label>Vía procesal</label>
+        <button type="button" class="ms-toggle">Todas</button>
+        <div class="ms-panel" hidden></div>
+      </div>
+      <div class="f multiselect" id="ms-reposicion">
+        <label>Reposición</label>
+        <button type="button" class="ms-toggle">Todas</button>
+        <div class="ms-panel" hidden></div>
+      </div>
+      <div class="f multiselect" id="ms-naturaleza">
+        <label>Naturaleza representado</label>
+        <button type="button" class="ms-toggle">Todas</button>
+        <div class="ms-panel" hidden></div>
+      </div>
+      <div class="f grow">
+        <label>Buscar (contraparte, expediente, N° Cencosud)</label>
+        <input type="text" id="f-texto" placeholder="Ej: 51-2023-C328, García...">
+      </div>
+      <button id="limpiar">Limpiar filtros</button>
+      <span class="filter-count" id="filter-count"></span>
+    </div>
+
+    <div class="download-row">
+      <a id="descargar" download="reporte_cencosud_generado.xlsx">Descargar Excel ↓</a>
+    </div>
+
+    <div class="preview-wrap">
+      <table class="preview" id="tabla-preview"></table>
+    </div>
+  </section>
+
+  <section id="paralegal-panel" style="display:none;">
+    <div class="panel-title">Paralegal — Observaciones y requerimientos</div>
+    <div class="filterbar" style="position:static;">
+      <div class="f grow">
+        <label>Buscar</label>
+        <input type="text" id="pl-buscar" placeholder="Expediente, contraparte...">
+      </div>
+      <div class="f">
+        <label>Estado</label>
+        <select id="pl-estado">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendientes</option>
+          <option value="hecho">Hechos</option>
+        </select>
+      </div>
+      <span class="filter-count" id="pl-count"></span>
+    </div>
+    <div class="preview-wrap" style="max-height:600px;">
+      <table class="preview" id="tabla-paralegal"></table>
+    </div>
+    <div id="paralegal-vacio" style="display:none;text-align:center;color:#8a92a6;padding:50px 0;font-size:13px;">
+      Todavía no hay observaciones registradas. Se van agregando desde el botón 💬 de cada fila en Resultados.
+    </div>
+  </section>
+
+  <footer class="notes">
+    Reglas aplicadas: solo casos del cliente facturable "CENCOSUD RETAIL PERU S.A." (incluye CENCOSUD PERU S.A. y TRES PALMERAS S.A.) · EN GIRO / EJECUCIÓN según campo <em>situacion</em> ·
+    intereses y costos al 20%/10% cuando no hay monto registrado · en ejecución se usa el último monto sentenciado y se descuentan solo los pagos marcados como "procesado = SI"
+    (se excluyen anticipados/provisionales) · fecha prevista de pago según instancia (1ª: +18m, 2ª: +12m, 3ª: +6m, ejecución: +3m) · N° Cencosud se cruza desde la hoja CENCOSUD
+    de Templates.xlsx usando el campo "Nro" contra ID Principal / Casación / Cuaderno · "Explicación de pretensiones" repite el monto reclamado V&T · "Fecha de inicio" corresponde a la
+    fecha de notificación al cliente (no a la fecha de creación de la carpeta en MyBig) · el contador "Sin N° Cencosud" solo cuenta casos sin ningún cruce encontrado en Templates.xlsx ·
+    las tarjetas del resumen (Total / En giro / En ejecución / Sin N° Cencosud) son clickeables y filtran la tabla al instante · las observaciones de la pestaña Paralegal se guardan en
+    este navegador y no se borran al generar un nuevo reporte.
+  </footer>
+
+</div>
+
+<div class="modal-overlay" id="modal-comentario-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">Observaciones del proceso</div>
+        <div class="modal-sub" id="mc-caso-info"></div>
+      </div>
+      <button type="button" class="modal-close" id="mc-cerrar">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="mc-lista"></div>
+      <div class="mc-nuevo">
+        <textarea id="mc-texto" rows="3" placeholder="Escribe una observación o requerimiento para este proceso..."></textarea>
+        <button type="button" id="mc-guardar" class="btn-primary-sm">Agregar observación</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const REPORT_HEADERS = ["", "Via procesal", "N° CENCOSUD", "CONTRAPARTE", "Cliente representado",
+  "EXPLICACIÓN DE PRETENSIONES", "MATERIA", "SUBMATERIA", "Organo Jurisdiccional",
+  "EXPEDIENTE", "FECHA DE INICIO", "STATUS", "OBSERVACIONES",
+  "NIVEL DE CONTINGENCIA V&T", "MONTO RECLAMADO V&T", "INTERESES/REAJUSTES",
+  "COSTOS/COSTAS", "CUANTÍA", "MONTO PROVISIONADO (S/)", "PAGOS", "RESUMEN DE PAGOS",
+  "FECHA PREVISTA DE PAGO", "ESTUDIO", "PROVISIÓN V&T", "Naturaleza Representado",
+  "Causas Relacionadas", "Situación",
+  "MONTO SENTENCIA 1RA INSTANCIA", "MONTO SENTENCIA 2DA INSTANCIA",
+  "MONTO SENTENCIA CORTE SUPREMA/TC", "ID"];
+const MONEY_COLS = [16,17,18,19,20]; // índices 1-based en REPORT_HEADERS (Intereses..Pagos)
+const MONEY_COLS_ALL = [6,15,16,17,18,19,20,24,28,29,30]; // incluye columnas espejo (F, W, sentencias)
+const DATE_COLS = [11]; // FECHA DE INICIO
+const ESTUDIO = "Vinatea y Toyama";
+const CLIENTE_FACTURABLE_OBJETIVO = "CENCOSUD RETAIL PERU S.A.";
+
+let rawFile=null, tplFile=null, prevFile=null;
+let TODAS_LAS_FILAS = [];   // resultado completo, sin filtrar
+let PREV_MAP = null;
+let CARD_FILTER = '';   // '' | 'GIRO' | 'EJEC' | 'SINID' — filtro activado desde las tarjetas resumen
+let ROW_SELECCIONADAS = new Set(); // rowKeys (EXPEDIENTE||ID) de filas marcadas por el usuario al hacer clic
+
+/* ---------------- Paralegal: observaciones persistentes (localStorage) ---------------- */
+const PARALEGAL_KEY = 'vt_cencosud_paralegal_v1';
+function cargarParalegalData(){
+  try{
+    const raw = localStorage.getItem(PARALEGAL_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ console.error('No se pudo leer Paralegal de localStorage', e); return {}; }
+}
+function guardarParalegalData(){
+  try{ localStorage.setItem(PARALEGAL_KEY, JSON.stringify(PARALEGAL_DATA)); }
+  catch(e){ console.error('No se pudo guardar Paralegal en localStorage', e); }
+}
+let PARALEGAL_DATA = cargarParalegalData(); // { rowKey: { expediente, contraparte, nroCencosud, id, comentarios:[{id,texto,hecho,fecha}] } }
+let MC_ROWKEY_ACTUAL = null; // rowKey que el modal de comentarios tiene abierto actualmente
+
+function botonComentario(rowKey){
+  const entry = PARALEGAL_DATA[rowKey];
+  const n = entry ? entry.comentarios.length : 0;
+  const pendientes = entry ? entry.comentarios.filter(c=>!c.hecho).length : 0;
+  const cls = n===0 ? 'btn-comentario' : (pendientes>0 ? 'btn-comentario has-pending' : 'btn-comentario has-done');
+  const key = rowKey.replace(/"/g,'&quot;');
+  return `<button type="button" class="${cls}" data-rowkey="${key}" title="Comentarios / observaciones">💬${n?`<span class="badge-count">${n}</span>`:''}</button>`;
+}
+
+function wireFileBox(boxId, inputId, onLoaded){
+  const box = document.getElementById(boxId);
+  const input = document.getElementById(inputId);
+  box.addEventListener('click', ()=>input.click());
+  input.addEventListener('change', e=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    box.classList.add('filled');
+    box.querySelector('.filename').textContent = '✓ ' + f.name;
+    onLoaded(f);
+  });
+  // arrastrar y soltar
+  ['dragenter','dragover'].forEach(evt=>{
+    box.addEventListener(evt, e=>{
+      e.preventDefault(); e.stopPropagation();
+      box.classList.add('dragging');
+    });
+  });
+  ['dragleave','drop'].forEach(evt=>{
+    box.addEventListener(evt, e=>{
+      e.preventDefault(); e.stopPropagation();
+      box.classList.remove('dragging');
+    });
+  });
+  box.addEventListener('drop', e=>{
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if(!f) return;
+    if(!f.name.toLowerCase().endsWith('.xlsx')){
+      alert('Solo se aceptan archivos .xlsx');
+      return;
+    }
+    const dt = new DataTransfer();
+    dt.items.add(f);
+    input.files = dt.files;
+    box.classList.add('filled');
+    box.querySelector('.filename').textContent = '✓ ' + f.name;
+    onLoaded(f);
+  });
+}
+wireFileBox('box-raw','file-raw', f=>{rawFile=f; checkReady();});
+wireFileBox('box-tpl','file-tpl', f=>{tplFile=f; checkReady();});
+wireFileBox('box-prev','file-prev', f=>{prevFile=f; checkReady();});
+
+function checkReady(){
+  const btn = document.getElementById('generar');
+  const st = document.getElementById('status');
+  if(rawFile && tplFile){
+    btn.disabled = false;
+    st.textContent = 'Listo para generar.';
+    st.className = '';
+  } else {
+    btn.disabled = true;
+    st.textContent = 'Sube el reporte total y el Templates.xlsx para continuar.';
+  }
+}
+
+function readWorkbook(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      try{
+        const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+        resolve(wb);
+      }catch(err){ reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function toFloat(v){
+  if(v===null||v===undefined||v===''||v==='null') return 0;
+  const n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
+}
+function isBlankish(v){
+  return v===null||v===undefined||v===''||v==='null';
+}
+function excelDateStr(v){
+  return (v instanceof Date) ? v : null;
+}
+function formatMoney(v){
+  if(v===null||v===undefined||v==='') return '';
+  const n = parseFloat(v);
+  if(isNaN(n)) return v; // texto (ej. "Infundado") se muestra tal cual
+  return 'S/ ' + n.toLocaleString('es-PE', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function formatDateDisplay(v){
+  if(v instanceof Date) return v.toLocaleDateString('es-PE');
+  return v || '';
+}
+function mybigUrl(id){
+  return `https://vinatea.mybig.com.ar/trabajos/overview/${id}/`;
+}
+
+function buildTemplateMap(wbTpl){
+  const sheetName = wbTpl.SheetNames.find(n=>n.toUpperCase()==='CENCOSUD') || 'CENCOSUD';
+  const ws = wbTpl.Sheets[sheetName];
+  if(!ws) return {};
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  const headers = rows[0];
+  const idx = {};
+  headers.forEach((h,i)=>{ if(h) idx[h.trim()] = i; });
+  const idCols = ['ID Principal','ID Principal 2','ID Casación 1','ID Casación 2','ID Cuaderno 1','ID Cuaderno 2','ID Cuaderno 3'];
+  const map = {};
+  for(let r=1;r<rows.length;r++){
+    const row = rows[r];
+    if(!row) continue;
+    const nroCencosud = idx['Nro Cencosud']!==undefined ? row[idx['Nro Cencosud']] : null;
+    const pretensiones = ['Pretensión Principal','Pretensión Subordinada','Pretensión Accesoria']
+      .map(c=> idx[c]!==undefined ? row[idx[c]] : null)
+      .filter(v=> v && String(v).trim() && String(v).trim()!=='\u00a0')
+      .join(' | ');
+    idCols.forEach(c=>{
+      if(idx[c]===undefined) return;
+      const key = row[idx[c]];
+      if(key===null||key===undefined||key==='') return;
+      map[String(key).trim()] = {nroCencosud: nroCencosud || '', pretensiones: pretensiones || ''};
+    });
+  }
+  return map;
+}
+
+function ultimaSentenciaGlobal(row, idx){
+  // Busca, entre los 6 slots crudos (s1..s6), el que tenga la fecha MÁS RECIENTE — sin importar
+  // instancia — y devuelve su monto y su categoría (campo sentencia_sX: Fundado, Infundado, Nulo,
+  // Abandono, Conciliación, Transacción, Excepción, Desistimiento, Consignación, etc.)
+  let mejorFecha=null, mejorMonto=0, mejorTexto=null;
+  for(let i=1;i<=6;i++){
+    const f = row[idx['fecha_s'+i]];
+    if(f instanceof Date){
+      if(!mejorFecha || f>mejorFecha){ mejorFecha=f; mejorMonto=toFloat(row[idx['monto_s'+i]]); mejorTexto=row[idx['sentencia_s'+i]]; }
+    }
+  }
+  return {monto:mejorMonto, texto:mejorTexto, fecha:mejorFecha};
+}
+function sentenciaInstancia(row, idx, slotA, slotB){
+  // De los 2 slots de una misma instancia (ej. 1ra instancia = s1/s2), toma solo el de fecha más
+  // reciente (criterio BCP: "última sentencia de cada instancia"). Si esa sentencia es Fundado o
+  // Fundado en Parte, muestra el monto; si es "Nulo" se deja en blanco (un Nulo no es un resultado a
+  // mostrar); en cualquier otro resultado (Infundado, Abandono, Conciliación, etc.) muestra el texto
+  // de la categoría, tomado de sentencia_sX (no de resultado_sX). Criterio 09/09.
+  const fA = row[idx['fecha_s'+slotA]], fB = row[idx['fecha_s'+slotB]];
+  let slot = null;
+  if(fA instanceof Date && fB instanceof Date) slot = (fB>fA) ? slotB : slotA;
+  else if(fA instanceof Date) slot = slotA;
+  else if(fB instanceof Date) slot = slotB;
+  if(!slot) return null;
+  const texto = row[idx['sentencia_s'+slot]];
+  const textoNorm = String(texto||'').trim().toUpperCase();
+  if(textoNorm==='NULO') return null;
+  if(textoNorm==='FUNDADO' || textoNorm==='FUNDADO EN PARTE') return toFloat(row[idx['monto_s'+slot]]);
+  return isBlankish(texto) ? null : texto;
+}
+function sumPagosProcesados(row, idx){
+  const pares = [
+    ['obligacion_principal','procesado_obligacion_principal','Obligación principal'],
+    ['intereses_legales','procesado_interes_generales','Intereses'],
+    ['monto_decostos','procesado_monto_decostos','Costos'],
+    ['pago_cal','procesado_pago_cal','CAL'],
+    ['monto_decostas','procesado_monto_costas','Costas'],
+    ['monto_conciliado','procesado_monto_conciliado','Conciliado'],
+    ['pago_cts','procesado_pago_cts','CTS'],
+    ['multa','procesado_multa','Multa'],
+  ];
+  let total=0;
+  const partes = [];
+  pares.forEach(([mc,fc,label])=>{
+    const flag = row[idx[fc]];
+    const monto = toFloat(row[idx[mc]]);
+    if(monto && String(flag).trim().toUpperCase()==='SI'){
+      total += monto;
+      partes.push(`${label}: S/ ${monto.toFixed(2)}`);
+    }
+  });
+  return {total, detalle: partes.join(' + ')};
+}
+function fechaPrevistaPago(estadoInterno){
+  const meses = {'PRIMERA INSTANCIA':18,'SEGUNDA INSTANCIA':12,'TERCERA INSTANCIA':6,'EJECUCIÓN':3}[estadoInterno] ?? 18;
+  const hoy = new Date();
+  const d = new Date(hoy.getFullYear(), hoy.getMonth()+meses, hoy.getDate());
+  return d.getFullYear();
+}
+
+function transformar(wbRaw, tplMap){
+  const ws = wbRaw.Sheets['Reporte'] || wbRaw.Sheets[wbRaw.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  const headers = rows[0];
+  const idx = {};
+  headers.forEach((h,i)=>{ if(h) idx[h.trim()] = i; });
+
+  const salida = [];
+  let sinId = 0;
+  for(let r=1;r<rows.length;r++){
+    const row = rows[r];
+    if(!row) continue;
+    const clienteFacturable = row[idx['clientefacturable']];
+    if(!clienteFacturable || String(clienteFacturable).trim().toUpperCase() !== CLIENTE_FACTURABLE_OBJETIVO) continue;
+
+    // Solo carpetas activas (excluye procesos "De Baja")
+    const estadoCarpeta = row[idx['estadocarpeta']];
+    if(!estadoCarpeta || String(estadoCarpeta).trim().toUpperCase() !== 'ACTIVO') continue;
+
+    const situacion = row[idx['situacion']];
+    // "ARCHIVO PROVISIONAL / TRANSITORIO" se trata como EN GIRO (caso puntual confirmado)
+    const SITUACIONES_GIRO = ['EN GIRO', 'ARCHIVO PROVISIONAL / TRANSITORIO'];
+    if(!SITUACIONES_GIRO.includes(situacion) && situacion!=='EJECUCION') continue;
+    const enGiro = SITUACIONES_GIRO.includes(situacion);
+
+    const cuantiaRaw = toFloat(row[idx['cuantia']]);
+    const ultimaSent = ultimaSentenciaGlobal(row, idx); // slot con la fecha más reciente entre los 6, con su categoría
+    let montoBase = enGiro ? cuantiaRaw : ultimaSent.monto;
+
+    const esNoCorresponde = v => String(v||'').trim().toUpperCase()==='NO CORRESPONDE';
+
+    // INTERESES: si la columna EN (intereses_estadopago_legales) dice "No corresponde", no se
+    // provisiona nada de intereses (ni el 20% de respaldo). Criterio confirmado 08/09.
+    const interesesNoCorresponde = esNoCorresponde(row[idx['intereses_estadopago_legales']]);
+    const interesesReg = toFloat(row[idx['intereses_legales']]);
+    let intereses = interesesNoCorresponde ? 0 : (interesesReg ? interesesReg : Math.round(montoBase*0.20*100)/100);
+
+    // "Costos y costas" son 2 conceptos independientes:
+    //  - "Costas" (col. BL, monto_decostas): si está liquidada se usa tal cual; si NO está liquidada
+    //    se asigna un monto FIJO de S/500 (corregido 04/09). Si la col. EL (monto_estadopago_decostas)
+    //    dice "No corresponde", se excluye del todo (ni el monto ni el S/500). Criterio 08/09.
+    //  - "Costos" (col. BO monto_decostos + col. CA pago_cal, sumadas como un solo concepto): si está
+    //    liquidado se usa tal cual; si NO, se asigna el 10% del monto base. Si la col. EM
+    //    (monto_estadopago_decostos) o la col. EQ (pago_estadopago_cal) dicen "No corresponde", esa
+    //    parte se excluye de la suma; si AMBAS dicen "No corresponde", tampoco se aplica el 10%.
+    const costasNoCorresponde = esNoCorresponde(row[idx['monto_estadopago_decostas']]);
+    const costosNoCorresponde = esNoCorresponde(row[idx['monto_estadopago_decostos']]);
+    const calNoCorresponde = esNoCorresponde(row[idx['pago_estadopago_cal']]);
+    const costasReg = costasNoCorresponde ? 0 : toFloat(row[idx['monto_decostas']]);
+    const costosSub = costosNoCorresponde ? 0 : toFloat(row[idx['monto_decostos']]);
+    const calSub = calNoCorresponde ? 0 : toFloat(row[idx['pago_cal']]);
+    const costosReg = costosSub + calSub;
+    const costasResult = costasNoCorresponde ? 0 : (costasReg ? costasReg : 500);
+    const costosResult = (costosNoCorresponde && calNoCorresponde) ? 0 : (costosReg ? costosReg : Math.round(montoBase*0.10*100)/100);
+    let costos = costasResult + costosResult;
+
+    // Cascada según la ÚLTIMA sentencia de TODO el proceso (no solo por instancia). Criterio 08/09:
+    //  - Abandono / Desistimiento / Excepción / Consignación → no hay nada que provisionar: todo a 0.
+    //  - Conciliación / Transacción → el monto reclamado se mantiene (es el monto conciliado/transado),
+    //    pero no se pagan intereses ni costos/costas sobre eso: se fuerzan a 0.
+    const categoriaUltimaSent = String(ultimaSent.texto||'').trim().toUpperCase();
+    const CATEGORIAS_CERO_TOTAL = ['ABANDONO','DESISTIMIENTO','EXCEPCIÓN','CONSIGNACIÓN','INFUNDADO','IMPROCEDENTE'];
+    const CATEGORIAS_SIN_INTERES_COSTOS = ['CONCILIACIÓN','TRANSACCIÓN'];
+    if(CATEGORIAS_CERO_TOTAL.includes(categoriaUltimaSent)){
+      montoBase = 0; intereses = 0; costos = 0;
+    } else if(CATEGORIAS_SIN_INTERES_COSTOS.includes(categoriaUltimaSent)){
+      intereses = 0; costos = 0;
+    }
+
+    // Cuando Cencosud es DEMANDANTE (col. J, naturalezarepresentado) no somos quien paga: no existe
+    // provisión a nuestro cargo. Se fuerza TODO a 0 (monto reclamado, intereses, costos/costas — sin
+    // aplicar el 10%/S.500 de respaldo) y la fecha prevista de pago pasa a "No aplica". Es la
+    // anulación final, por encima de cualquier otro criterio. Confirmado 07/09 y 08/09.
+    const esDemandante = String(row[idx['naturalezarepresentado']] || '').trim().toUpperCase() === 'DEMANDANTE';
+    if(esDemandante){ montoBase = 0; intereses = 0; costos = 0; }
+
+    const suma = montoBase + intereses + costos;
+    // Cuando la fecha prevista de pago es "No aplica" (demandante), los PAGOS también se fuerzan a 0
+    // (antes se colaba, por ejemplo, el monto de una multa ya pagada). Confirmado 08/09.
+    const pagosInfo = esDemandante ? {total:0, detalle:''} : (enGiro ? {total:0, detalle:''} : sumPagosProcesados(row, idx));
+    const pagos = pagosInfo.total;
+    // Si el Monto Reclamado V&T (montoBase) es 0 por otra razón (no por ser demandante), el Monto
+    // Provisionado se fuerza a 0 y se resalta en rojo para que el abogado lo valide (criterio 04/09).
+    // Cuando es DEMANDANTE, el 0 es esperado/normal: no se marca como anomalía.
+    const provisionForzadaCero = !esDemandante && montoBase === 0;
+    const montoProvisionado = esDemandante ? 0 : (provisionForzadaCero ? 0 : (suma - pagos));
+    const estadoInterno = row[idx['estadointerno']];
+
+    const nro = row[idx['Nro']];
+    const tpl = tplMap[String(nro).trim()] || null;
+    // "Sin N° Cencosud" solo cuenta cuando NO hay ningún cruce en Templates.xlsx (sin dato real).
+    // Si el cruce existe pero el campo "Nro Cencosud" está vacío, no se considera un caso pendiente aquí.
+    const sinCruce = !tpl;
+    if(sinCruce) sinId++;
+
+    salida.push([
+      "",
+      row[idx['viaprocesal']],
+      tpl ? tpl.nroCencosud : "",
+      row[idx['contraparte']],
+      row[idx['Cliente']],
+      cuantiaRaw,  // EXPLICACIÓN DE PRETENSIONES: SIEMPRE la cuantía original, tanto en giro como en ejecución (no varía como MONTO RECLAMADO V&T)
+      row[idx['materia']],
+      row[idx['submateria']],
+      row[idx['organojurisdiccional']],
+      row[idx['Nroexpediente']],
+      excelDateStr(row[idx['fechanotificacioncliente']]),
+      estadoInterno,
+      row[idx['bitacora']],
+      row[idx['contingencia_cliente']], // NIVEL DE CONTINGENCIA V&T: col. EI (antes usaba BF "contingencia")
+      montoBase, intereses, costos, suma, montoProvisionado, pagos,
+      pagosInfo.detalle, // RESUMEN DE PAGOS: detalle de qué conceptos y montos se sumaron (idea de Claudia, 08/09)
+      esDemandante ? 'No aplica' : fechaPrevistaPago(estadoInterno),
+      ESTUDIO,
+      esDemandante ? 'No aplica' : toFloat(row[idx['provision']]),
+      row[idx['naturalezarepresentado']],
+      row[idx['causasrelacionadas']],
+      enGiro ? "EN GIRO" : "EN EJECUCIÓN",
+      sentenciaInstancia(row,idx,1,2), sentenciaInstancia(row,idx,3,4), sentenciaInstancia(row,idx,5,6), // solo la última sentencia de cada instancia (criterio BCP, 08/09)
+      nro,
+      row[idx['reposicion']], // solo para el filtro "Reposición" (col. BB del raw); no se exporta como columna del reporte
+      sinCruce, // índice 32: flag interno "sin cruce real en Templates.xlsx"; no se exporta
+      provisionForzadaCero, // índice 33: flag interno "monto provisionado forzado a 0 por monto reclamado = 0"; no se exporta
+    ]);
+  }
+  return {salida, sinId, totalRawRows: rows.length-1};
+}
+
+function cargarPrevio(wbPrev){
+  const ws = wbPrev.Sheets[wbPrev.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  const map = {};
+  for(let r=1;r<rows.length;r++){
+    const row = rows[r];
+    if(!row) continue;
+    const key = row[9]+'||'+row[30]; // EXPEDIENTE || ID
+    map[key] = row;
+  }
+  return map;
+}
+
+/* ---------------- filtros (multi-selección) ---------------- */
+const MULTISELECTS = {}; // id -> {getSelected, clear}
+
+function crearMultiSelect(containerId, valores){
+  const el = document.getElementById(containerId);
+  // clonar botón y panel para eliminar listeners de una generación anterior (evita acumulación de handlers)
+  const btnOld = el.querySelector('.ms-toggle');
+  const panelOld = el.querySelector('.ms-panel');
+  const btn = btnOld.cloneNode(true);
+  const panel = panelOld.cloneNode(false);
+  btnOld.replaceWith(btn);
+  panelOld.replaceWith(panel);
+
+  const labelDefault = btn.textContent;
+  const selected = new Set();
+  const unicos = Array.from(new Set(valores.filter(v=>v!==null && v!==undefined && v!=='')))
+    .sort((a,b)=>String(a).localeCompare(String(b)));
+
+  panel.textContent = ''; // limpiar
+  if(!unicos.length){
+    const empty = document.createElement('div');
+    empty.className = 'ms-empty';
+    empty.textContent = 'Sin datos';
+    panel.appendChild(empty);
+  } else {
+    unicos.forEach(v=>{
+      const label = document.createElement('label');
+      label.className = 'ms-opt';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.value = String(v);
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(' ' + String(v)));
+      panel.appendChild(label);
+    });
+  }
+
+  function actualizarBoton(){
+    if(selected.size===0){ btn.textContent = labelDefault; el.classList.remove('has-selection'); }
+    else{ btn.textContent = `${selected.size} seleccionado${selected.size>1?'s':''}`; el.classList.add('has-selection'); }
+  }
+  panel.addEventListener('change', e=>{
+    if(e.target.matches('input[type=checkbox]')){
+      if(e.target.checked) selected.add(e.target.value); else selected.delete(e.target.value);
+      actualizarBoton();
+      aplicarFiltros();
+    }
+  });
+  btn.addEventListener('click', e=>{
+    e.stopPropagation();
+    document.querySelectorAll('.ms-panel').forEach(p=>{ if(p!==panel) p.hidden = true; });
+    panel.hidden = !panel.hidden;
+  });
+
+  MULTISELECTS[containerId] = {
+    getSelected: () => selected,
+    clear: () => {
+      selected.clear();
+      panel.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked=false);
+      actualizarBoton();
+    }
+  };
+}
+
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.multiselect')) document.querySelectorAll('.ms-panel').forEach(p=>p.hidden=true);
+});
+
+function inicializarFiltros(filas){
+  crearMultiSelect('ms-status', filas.map(f=>f[11]));
+  crearMultiSelect('ms-materia', filas.map(f=>f[6]));
+  crearMultiSelect('ms-contingencia', filas.map(f=>f[13]));
+  crearMultiSelect('ms-viaprocesal', filas.map(f=>f[1]));
+  crearMultiSelect('ms-reposicion', filas.map(f=>f[31]));
+  crearMultiSelect('ms-naturaleza', filas.map(f=>f[24]));
+
+  // clonar para evitar listeners duplicados si se genera el reporte más de una vez
+  const textoOld = document.getElementById('f-texto');
+  const textoNew = textoOld.cloneNode(true);
+  textoOld.replaceWith(textoNew);
+  textoNew.addEventListener('input', aplicarFiltros);
+
+  const limpiarOld = document.getElementById('limpiar');
+  const limpiarNew = limpiarOld.cloneNode(true);
+  limpiarOld.replaceWith(limpiarNew);
+  limpiarNew.addEventListener('click', ()=>{
+    Object.values(MULTISELECTS).forEach(ms=>ms.clear());
+    document.getElementById('f-texto').value='';
+    CARD_FILTER = '';
+    document.querySelectorAll('.summary .cell.clickable').forEach(c=>c.classList.remove('active'));
+    document.getElementById('card-total').classList.add('active');
+    aplicarFiltros();
+  });
+}
+
+function filasFiltradas(){
+  const status = MULTISELECTS['ms-status'].getSelected();
+  const materia = MULTISELECTS['ms-materia'].getSelected();
+  const contingencia = MULTISELECTS['ms-contingencia'].getSelected();
+  const viaProcesal = MULTISELECTS['ms-viaprocesal'].getSelected();
+  const reposicion = MULTISELECTS['ms-reposicion'].getSelected();
+  const naturaleza = MULTISELECTS['ms-naturaleza'].getSelected();
+  const texto = document.getElementById('f-texto').value.trim().toLowerCase();
+
+  return TODAS_LAS_FILAS.filter(f=>{
+    if(status.size && !status.has(String(f[11]))) return false;
+    if(materia.size && !materia.has(String(f[6]))) return false;
+    if(contingencia.size && !contingencia.has(String(f[13]))) return false;
+    if(viaProcesal.size && !viaProcesal.has(String(f[1]))) return false;
+    if(reposicion.size && !reposicion.has(String(f[31]))) return false;
+    if(naturaleza.size && !naturaleza.has(String(f[24]))) return false;
+    if(texto){
+      const hay = [f[2],f[3],f[9]].some(v=> v && String(v).toLowerCase().includes(texto));
+      if(!hay) return false;
+    }
+    if(CARD_FILTER==='GIRO' && f[26]!=='EN GIRO') return false;
+    if(CARD_FILTER==='EJEC' && f[26]!=='EN EJECUCIÓN') return false;
+    if(CARD_FILTER==='SINID' && !f[32]) return false;
+    return true;
+  });
+}
+
+function wireSummaryCards(){
+  document.querySelectorAll('.summary .cell.clickable').forEach(cellOld=>{
+    const cell = cellOld.cloneNode(true); // clonar para evitar listeners duplicados si se genera el reporte más de una vez
+    cellOld.replaceWith(cell);
+    cell.addEventListener('click', ()=>{
+      const f = cell.dataset.filter;
+      CARD_FILTER = (CARD_FILTER===f) ? '' : f; // click de nuevo sobre la misma tarjeta = quitar filtro
+      document.querySelectorAll('.summary .cell.clickable').forEach(c=>c.classList.remove('active'));
+      const active = document.querySelector(`.summary .cell.clickable[data-filter="${CARD_FILTER}"]`);
+      active.classList.add('active');
+      aplicarFiltros();
+    });
+  });
+}
+
+function aplicarFiltros(){
+  const filas = filasFiltradas();
+  document.getElementById('filter-count').textContent = `${filas.length} de ${TODAS_LAS_FILAS.length} casos`;
+  renderPreview(filas, PREV_MAP);
+  actualizarDescarga(filas, PREV_MAP);
+}
+
+/* ---------------- render + export ---------------- */
+function renderPreview(filas, prevMap){
+  const changesCol = prevMap ? ['Cambios vs mes anterior'] : [];
+  const headerRow = REPORT_HEADERS.slice(1).concat(changesCol);
+  let html = '<thead><tr><th></th>' + headerRow.map(h=>`<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+  const max = Math.min(filas.length, 300);
+  for(let i=0;i<max;i++){
+    const fila = filas[i];
+    const rowKey = fila[9]+'||'+fila[30]; // EXPEDIENTE || ID, misma key que se usa para comparar vs. mes anterior
+    // Refresca el cache de Paralegal (expediente/contraparte/N° Cencosud/ID) para este caso si ya tiene observaciones,
+    // así la pestaña Paralegal siempre muestra el dato más reciente aunque el caso cambie de nombre/N° Cencosud.
+    if(PARALEGAL_DATA[rowKey]){
+      Object.assign(PARALEGAL_DATA[rowKey], {expediente:fila[9], contraparte:fila[3], nroCencosud:fila[2], id:fila[30]});
+    }
+    let cambios = [];
+    let changedCols = new Set(); // números de columna (1-based, spreadsheet) que cambiaron
+    if(prevMap){
+      const prev = prevMap[rowKey];
+      if(!prev){ cambios.push('CASO NUEVO'); }
+      else{
+        MONEY_COLS.forEach(c=>{
+          const nv = toFloat(fila[c-1]), pv = toFloat(prev[c-1]);
+          if(nv!==pv){ cambios.push(`${REPORT_HEADERS[c-1]}: ${prev[c-1]} → ${fila[c-1]}`); changedCols.add(c); }
+        });
+      }
+    }
+    const trClass = ROW_SELECCIONADAS.has(rowKey) ? ' class="row-selected"' : '';
+    html += `<tr${trClass} data-rowkey="${rowKey.replace(/"/g,'&quot;')}"><td>${botonComentario(rowKey)}</td>` + fila.slice(1, REPORT_HEADERS.length).map((v,ci)=>{
+      const colNum = ci+2; // fila[0]=col A; fila.slice(1)[0]=col B=colNum2, etc.
+      let cls = changedCols.has(colNum) ? 'changed' : '';
+      if(colNum===19 && ((typeof v==='number' && v<0) || fila[33])){ cls += ' neg-provision'; } // S = Monto Provisionado negativo o forzado a 0 (monto reclamado = 0)
+      const clsAttr = cls ? ` class="${cls.trim()}"` : '';
+      const titleAttr = (colNum===4 || colNum===10) && v ? ` title="${String(v).replace(/"/g,'&quot;')}"` : ''; // D = CONTRAPARTE, J = EXPEDIENTE, columnas comprimidas
+      let display;
+      if(colNum===31 && v!==null && v!==undefined && v!==''){ // AE = ID -> link a MyBig
+        const idNum = parseInt(v, 10);
+        display = `<a href="${mybigUrl(idNum)}" target="_blank" rel="noopener">${v}</a>`;
+      }
+      else if(colNum===27 && v){ // AA = Situación -> badge píldora
+        display = `<span class="badge-pill ${v==='EN GIRO'?'giro':'ejec'}">${v}</span>`;
+      }
+      else if(colNum===12 && v){ // L = STATUS -> badge píldora neutra
+        display = `<span class="badge-pill status">${v}</span>`;
+      }
+      else if(colNum===14 && v){ // N = Nivel de contingencia V&T -> badge píldora por nivel
+        const nivel = String(v).trim().toUpperCase();
+        const claseNivel = nivel==='PROBABLE' ? 'probable' : nivel==='POSIBLE' ? 'posible' : nivel==='REMOTA' ? 'remota' : 'status';
+        display = `<span class="badge-pill ${claseNivel}">${v}</span>`;
+      }
+      else if(DATE_COLS.includes(colNum)) display = formatDateDisplay(v);
+      else if(MONEY_COLS_ALL.includes(colNum)) display = formatMoney(v);
+      else display = (v===null||v===undefined?'':v);
+      return `<td${clsAttr}${titleAttr}>${display}</td>`;
+    }).join('');
+    if(prevMap) html += `<td>${cambios.join('; ')}</td>`;
+    html += '</tr>';
+  }
+  html += '</tbody>';
+  document.getElementById('tabla-preview').innerHTML = html;
+  if(filas.length > max){
+    document.getElementById('tabla-preview').insertAdjacentHTML('afterend',
+      `<div style="font-size:11.5px;color:#8a8f79;padding:8px 4px;">Vista previa limitada a ${max} filas — el Excel descargado incluye las ${filas.length}.</div>`);
+  }
+}
+
+function construirWorkbookSalida(filas, prevMap){
+  const headers = REPORT_HEADERS.slice(1); // se quita la columna A (vacía por diseño del template)
+  if(prevMap) headers.push('CAMBIOS vs MES ANTERIOR');
+  const aoa = [headers];
+  filas.forEach(fila=>{
+    const row = fila.slice(1, REPORT_HEADERS.length); // igual: sin col. A, y sin el campo extra "reposicion"
+    if(prevMap){
+      const key = fila[9]+'||'+fila[30];
+      const prev = prevMap[key];
+      let cambios = [];
+      if(!prev) cambios.push('CASO NUEVO');
+      else MONEY_COLS.forEach(c=>{
+        const nv = toFloat(fila[c-1]), pv = toFloat(prev[c-1]);
+        if(nv!==pv) cambios.push(`${REPORT_HEADERS[c-1]}: ${prev[c-1]} → ${fila[c-1]}`);
+      });
+      row.push(cambios.join('; '));
+    }
+    aoa.push(row);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa, {cellDates:true});
+  ws['!freeze'] = {xSplit:0, ySplit:1};
+  const COLS_ANGOSTAS = new Set(['MONTO SENTENCIA 1RA INSTANCIA','MONTO SENTENCIA 2DA INSTANCIA','MONTO SENTENCIA CORTE SUPREMA/TC']);
+  ws['!cols'] = headers.map(h=> COLS_ANGOSTAS.has(h) ? {wch:14} : (h==='RESUMEN DE PAGOS' ? {wch:45} : {wch:20}));
+
+  // formato de celda: moneda (S/) y fecha, fila por fila (se salta encabezado)
+  // nota: -2 en vez de -1 porque MONEY_COLS_ALL/DATE_COLS están calculados asumiendo
+  // la columna A presente, y aquí ya se quitó esa columna del sheet exportado.
+  const MONEY_FMT = '"S/" #,##0.00;("S/" #,##0.00);"-"';
+  const PROV_FMT = '"S/" #,##0.00;[Red]("S/" #,##0.00);"-"'; // Monto Provisionado negativo en rojo
+  const DATE_FMT = 'dd/mm/yyyy';
+  const ID_COL = 30 - 1; // AE = ID (0-based), ajustado por la columna A eliminada
+  const PROV_COL = 19 - 2; // S = Monto Provisionado (0-based), ajustado por la columna A eliminada
+  const FORZADO_FMT = '[Red]"S/" 0.00'; // Monto Provisionado forzado a 0 (monto reclamado = 0), siempre en rojo
+  for(let r=1;r<aoa.length;r++){
+    MONEY_COLS_ALL.forEach(c=>{
+      const ref = XLSX.utils.encode_cell({r, c: c-2});
+      const cell = ws[ref];
+      if(cell && cell.t==='n'){ cell.z = (c-2===PROV_COL) ? PROV_FMT : MONEY_FMT; }
+    });
+    if(filas[r-1][35]){ // provisionForzadaCero
+      const ref = XLSX.utils.encode_cell({r, c: PROV_COL});
+      const cell = ws[ref];
+      if(cell) cell.z = FORZADO_FMT;
+    }
+    DATE_COLS.forEach(c=>{
+      const ref = XLSX.utils.encode_cell({r, c: c-2});
+      const cell = ws[ref];
+      if(cell && cell.v instanceof Date){ cell.t='d'; cell.z = DATE_FMT; }
+    });
+    // ID -> hipervínculo a MyBig
+    const idRef = XLSX.utils.encode_cell({r, c: ID_COL});
+    const idCell = ws[idRef];
+    if(idCell && idCell.v!==null && idCell.v!==undefined && idCell.v!==''){
+      const idNum = parseInt(idCell.v, 10);
+      idCell.l = {Target: mybigUrl(idNum), Tooltip: 'Abrir en MyBig'};
+    }
+  }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Reporte CENCOSUD');
+  return wb;
+}
+
+function actualizarDescarga(filas, prevMap){
+  const wbOut = construirWorkbookSalida(filas, prevMap);
+  const wbout = XLSX.write(wbOut, {bookType:'xlsx', type:'array'});
+  const blob = new Blob([wbout], {type:'application/octet-stream'});
+  const url = URL.createObjectURL(blob);
+  document.getElementById('descargar').href = url;
+}
+
+document.getElementById('generar').addEventListener('click', async ()=>{
+  const st = document.getElementById('status');
+  st.className=''; st.textContent='Procesando...';
+  try{
+    const wbRaw = await readWorkbook(rawFile);
+    const wbTpl = await readWorkbook(tplFile);
+    const tplMap = buildTemplateMap(wbTpl);
+    const {salida, sinId, totalRawRows} = transformar(wbRaw, tplMap);
+
+    PREV_MAP = null;
+    if(prevFile){
+      const wbPrev = await readWorkbook(prevFile);
+      PREV_MAP = cargarPrevio(wbPrev);
+    }
+    TODAS_LAS_FILAS = salida;
+
+    const nGiro = salida.filter(f=>f[26]==='EN GIRO').length;
+    const nEjec = salida.filter(f=>f[26]==='EN EJECUCIÓN').length;
+    document.getElementById('n-total').textContent = salida.length;
+    document.getElementById('n-giro').textContent = nGiro;
+    document.getElementById('n-ejec').textContent = nEjec;
+    document.getElementById('n-sinid').textContent = sinId;
+
+    CARD_FILTER = '';
+    document.querySelectorAll('.summary .cell.clickable').forEach(c=>c.classList.remove('active'));
+    document.getElementById('card-total').classList.add('active');
+    wireSummaryCards();
+
+    inicializarFiltros(salida);
+    aplicarFiltros();
+
+    mostrarPagina('resultados');
+    st.textContent = `Listo: ${salida.length} casos generados.`;
+  }catch(err){
+    console.error(err);
+    st.className='err';
+    st.textContent = 'Error al procesar: ' + err.message;
+  }
+});
+document.getElementById('tabla-preview').addEventListener('click', e=>{
+  const btnComentario = e.target.closest('.btn-comentario');
+  if(btnComentario){ abrirModalComentario(btnComentario.dataset.rowkey); return; }
+  if(e.target.closest('a')) return; // no interferir con el link a MyBig
+  const tr = e.target.closest('tbody tr');
+  if(!tr || !tr.dataset.rowkey) return;
+  const key = tr.dataset.rowkey;
+  if(ROW_SELECCIONADAS.has(key)){ ROW_SELECCIONADAS.delete(key); tr.classList.remove('row-selected'); }
+  else{ ROW_SELECCIONADAS.add(key); tr.classList.add('row-selected'); }
+});
+
+/* ---------------- modal de comentarios ---------------- */
+function fechaLegible(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-PE', {day:'2-digit', month:'2-digit', year:'numeric'}) + ' ' + d.toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit'});
+}
+function abrirModalComentario(rowKey){
+  MC_ROWKEY_ACTUAL = rowKey;
+  const fila = TODAS_LAS_FILAS.find(f => (f[9]+'||'+f[30])===rowKey);
+  const info = PARALEGAL_DATA[rowKey];
+  const expediente = fila ? fila[9] : (info ? info.expediente : '');
+  const contraparte = fila ? fila[3] : (info ? info.contraparte : '');
+  document.getElementById('mc-caso-info').textContent = `${expediente || ''}${contraparte ? ' · '+contraparte : ''}`;
+  document.getElementById('mc-texto').value = '';
+  renderListaComentarios();
+  document.getElementById('modal-comentario-overlay').classList.add('open');
+}
+function cerrarModalComentario(){
+  document.getElementById('modal-comentario-overlay').classList.remove('open');
+  MC_ROWKEY_ACTUAL = null;
+}
+function renderListaComentarios(){
+  const cont = document.getElementById('mc-lista');
+  const entry = PARALEGAL_DATA[MC_ROWKEY_ACTUAL];
+  const comentarios = entry ? entry.comentarios.slice().sort((a,b)=> b.fecha.localeCompare(a.fecha)) : [];
+  if(!comentarios.length){ cont.innerHTML = '<div class="mc-empty">Todavía no hay observaciones para este proceso.</div>'; return; }
+  cont.innerHTML = comentarios.map(c=>`
+    <div class="mc-item" data-cid="${c.id}">
+      <div class="mc-texto">${String(c.texto).replace(/</g,'&lt;')}</div>
+      <div class="mc-item-bottom">
+        <div class="mc-fecha">${fechaLegible(c.fecha)}</div>
+        <span class="mc-estado ${c.hecho?'hecho':'pendiente'}">${c.hecho?'Hecho':'Pendiente'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+function refrescarBotonComentario(rowKey){
+  const btn = document.querySelector(`#tabla-preview .btn-comentario[data-rowkey="${CSS.escape(rowKey)}"]`);
+  if(btn) btn.outerHTML = botonComentario(rowKey);
+}
+document.getElementById('mc-guardar').addEventListener('click', ()=>{
+  const texto = document.getElementById('mc-texto').value.trim();
+  if(!texto || !MC_ROWKEY_ACTUAL) return;
+  const fila = TODAS_LAS_FILAS.find(f => (f[9]+'||'+f[30])===MC_ROWKEY_ACTUAL);
+  if(!PARALEGAL_DATA[MC_ROWKEY_ACTUAL]){
+    PARALEGAL_DATA[MC_ROWKEY_ACTUAL] = {
+      expediente: fila ? fila[9] : '', contraparte: fila ? fila[3] : '',
+      nroCencosud: fila ? fila[2] : '', id: fila ? fila[30] : '',
+      comentarios: [],
+    };
+  }
+  PARALEGAL_DATA[MC_ROWKEY_ACTUAL].comentarios.push({
+    id: Date.now()+'-'+Math.random().toString(36).slice(2,8),
+    texto, hecho: false, // toda observación nueva nace PENDIENTE; solo se marca "hecho" después, cuando se subsana
+    fecha: new Date().toISOString(),
+  });
+  guardarParalegalData();
+  document.getElementById('mc-texto').value = '';
+  renderListaComentarios();
+  refrescarBotonComentario(MC_ROWKEY_ACTUAL);
+});
+document.getElementById('mc-cerrar').addEventListener('click', cerrarModalComentario);
+document.getElementById('modal-comentario-overlay').addEventListener('click', e=>{
+  if(e.target.id==='modal-comentario-overlay') cerrarModalComentario();
+});
+
+/* ---------------- pestaña Paralegal ---------------- */
+function renderParalegalTab(){
+  const buscar = document.getElementById('pl-buscar').value.trim().toLowerCase();
+  const estado = document.getElementById('pl-estado').value;
+  let filas = [];
+  Object.entries(PARALEGAL_DATA).forEach(([rowKey, info])=>{
+    info.comentarios.forEach(c=> filas.push({rowKey, info, c}));
+  });
+  filas.sort((a,b)=> b.c.fecha.localeCompare(a.c.fecha));
+  if(buscar){
+    filas = filas.filter(({info})=>
+      String(info.expediente||'').toLowerCase().includes(buscar) ||
+      String(info.contraparte||'').toLowerCase().includes(buscar) ||
+      String(info.nroCencosud||'').toLowerCase().includes(buscar)
+    );
+  }
+  if(estado==='pendiente') filas = filas.filter(({c})=>!c.hecho);
+  if(estado==='hecho') filas = filas.filter(({c})=>c.hecho);
+
+  document.getElementById('pl-count').textContent = `${filas.length} observación(es)`;
+  document.getElementById('paralegal-vacio').style.display = Object.keys(PARALEGAL_DATA).length ? 'none' : 'block';
+
+  const tabla = document.getElementById('tabla-paralegal');
+  if(!filas.length){ tabla.innerHTML=''; return; }
+  const headerRow = ['Expediente','Contraparte','Observación','Fecha','Estado',''];
+  let html = '<thead><tr>' + headerRow.map(h=>`<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+  filas.forEach(({rowKey, info, c})=>{
+    const verLink = info.id ? `<a class="pl-ver" href="${mybigUrl(parseInt(info.id,10))}" target="_blank" rel="noopener">Ver en MyBig ↗</a>` : '';
+    html += `<tr>
+      <td>${info.expediente||''}</td>
+      <td>${info.contraparte||''}</td>
+      <td class="pl-texto">${String(c.texto).replace(/</g,'&lt;')}</td>
+      <td>${fechaLegible(c.fecha)}</td>
+      <td><button type="button" class="pl-pill ${c.hecho?'hecho':'pendiente'}" data-rowkey="${rowKey.replace(/"/g,'&quot;')}" data-cid="${c.id}">${c.hecho?'Hecho':'Pendiente'}</button></td>
+      <td>${verLink} <button type="button" class="pl-del" data-rowkey="${rowKey.replace(/"/g,'&quot;')}" data-cid="${c.id}" title="Eliminar">🗑</button></td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  tabla.innerHTML = html;
+}
+document.getElementById('tabla-paralegal').addEventListener('click', e=>{
+  const pill = e.target.closest('.pl-pill');
+  if(pill){
+    const entry = PARALEGAL_DATA[pill.dataset.rowkey];
+    const c = entry && entry.comentarios.find(c=>c.id===pill.dataset.cid);
+    if(c){ c.hecho = !c.hecho; guardarParalegalData(); renderParalegalTab(); refrescarBotonComentario(pill.dataset.rowkey); }
+    return;
+  }
+  const del = e.target.closest('.pl-del');
+  if(del){
+    const entry = PARALEGAL_DATA[del.dataset.rowkey];
+    if(entry){
+      entry.comentarios = entry.comentarios.filter(c=>c.id!==del.dataset.cid);
+      if(!entry.comentarios.length) delete PARALEGAL_DATA[del.dataset.rowkey];
+      guardarParalegalData();
+      renderParalegalTab();
+      refrescarBotonComentario(del.dataset.rowkey);
+    }
+  }
+});
+document.getElementById('pl-buscar').addEventListener('input', renderParalegalTab);
+document.getElementById('pl-estado').addEventListener('change', renderParalegalTab);
+
+/* ---------------- navegación entre pestañas ---------------- */
+function mostrarPagina(pagina){ // 'generador' | 'resultados' | 'paralegal'
+  document.getElementById('generador').style.display = pagina==='generador' ? '' : 'none';
+  document.getElementById('resultado').style.display = pagina==='resultados' ? 'block' : 'none';
+  document.getElementById('paralegal-panel').style.display = pagina==='paralegal' ? 'block' : 'none';
+  document.querySelectorAll('nav.tabs .tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+pagina).classList.add('active');
+  if(pagina==='paralegal') renderParalegalTab();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+document.getElementById('tab-generador').addEventListener('click', ()=> mostrarPagina('generador'));
+document.getElementById('tab-resultados').addEventListener('click', ()=> mostrarPagina('resultados'));
+document.getElementById('tab-paralegal').addEventListener('click', ()=> mostrarPagina('paralegal'));
+</script></body></html>
