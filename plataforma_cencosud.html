@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <style>
   :root{
     --bg:#f7f8fb;          /* fondo de página */
@@ -1027,7 +1028,7 @@ function aplicarFiltros(){
   const filas = filasFiltradas();
   document.getElementById('filter-count').textContent = `${filas.length} de ${TODAS_LAS_FILAS.length} casos`;
   renderPreview(filas, PREV_MAP);
-  actualizarDescarga(filas, PREV_MAP);
+  actualizarDescarga(filas, PREV_MAP).catch(err=>console.error('Error generando el Excel de descarga:', err));
 }
 
 /* ---------------- render + export ---------------- */
@@ -1095,10 +1096,12 @@ function renderPreview(filas, prevMap){
   }
 }
 
-function construirWorkbookSalida(filas, prevMap){
+async function construirWorkbookSalida(filas, prevMap){
   const headers = REPORT_HEADERS.slice(1); // se quita la columna A (vacía por diseño del template)
   if(prevMap) headers.push('CAMBIOS vs MES ANTERIOR');
-  const aoa = [headers];
+  const COLS_ANGOSTAS = new Set(['MONTO SENTENCIA 1RA INSTANCIA','MONTO SENTENCIA 2DA INSTANCIA','MONTO SENTENCIA CORTE SUPREMA/TC']);
+
+  const rows = [];
   filas.forEach(fila=>{
     const row = fila.slice(1, REPORT_HEADERS.length); // igual: sin col. A, y sin el campo extra "reposicion"
     if(prevMap){
@@ -1112,55 +1115,68 @@ function construirWorkbookSalida(filas, prevMap){
       });
       row.push(cambios.join('; '));
     }
-    aoa.push(row);
+    rows.push(row);
   });
-  const ws = XLSX.utils.aoa_to_sheet(aoa, {cellDates:true});
-  ws['!freeze'] = {xSplit:0, ySplit:1};
-  const COLS_ANGOSTAS = new Set(['MONTO SENTENCIA 1RA INSTANCIA','MONTO SENTENCIA 2DA INSTANCIA','MONTO SENTENCIA CORTE SUPREMA/TC']);
-  ws['!cols'] = headers.map(h=> COLS_ANGOSTAS.has(h) ? {wch:14} : (h==='RESUMEN DE PAGOS' ? {wch:45} : {wch:20}));
 
-  // formato de celda: moneda (S/) y fecha, fila por fila (se salta encabezado)
-  // nota: -2 en vez de -1 porque MONEY_COLS_ALL/DATE_COLS están calculados asumiendo
-  // la columna A presente, y aquí ya se quitó esa columna del sheet exportado.
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Reporte CENCOSUD');
+  // Tabla nativa de Excel (bandas de color + autofiltro incluido) — a diferencia de SheetJS community,
+  // ExcelJS sí soporta escribir estilos de celda, así que esto se ve como una tabla real al abrirla.
+  ws.addTable({
+    name: 'ReporteCencosud',
+    ref: 'A1',
+    headerRow: true,
+    style: { theme: 'TableStyleMedium2', showRowStripes: true },
+    columns: headers.map(h=>({name: h || ' '})),
+    rows: rows,
+  });
+  ws.columns.forEach((col, i)=>{
+    const h = headers[i];
+    col.width = COLS_ANGOSTAS.has(h) ? 14 : (h==='RESUMEN DE PAGOS' ? 45 : 20);
+  });
+
+  // formato de celda: moneda (S/), fecha e hipervínculo, fila por fila
+  // nota: -1 en vez de -2 porque MONEY_COLS_ALL/DATE_COLS están calculados asumiendo la columna A
+  // presente (colNum 1-based con col. A), y ExcelJS ya usa columnas 1-based sin esa columna A.
   const MONEY_FMT = '"S/" #,##0.00;("S/" #,##0.00);"-"';
   const PROV_FMT = '"S/" #,##0.00;[Red]("S/" #,##0.00);"-"'; // Monto Provisionado negativo en rojo
-  const DATE_FMT = 'dd/mm/yyyy';
-  const ID_COL = 30 - 1; // AE = ID (0-based), ajustado por la columna A eliminada
-  const PROV_COL = 19 - 2; // S = Monto Provisionado (0-based), ajustado por la columna A eliminada
   const FORZADO_FMT = '[Red]"S/" 0.00'; // Monto Provisionado forzado a 0 (monto reclamado = 0), siempre en rojo
-  for(let r=1;r<aoa.length;r++){
-    MONEY_COLS_ALL.forEach(c=>{
-      const ref = XLSX.utils.encode_cell({r, c: c-2});
-      const cell = ws[ref];
-      if(cell && cell.t==='n'){ cell.z = (c-2===PROV_COL) ? PROV_FMT : MONEY_FMT; }
+  const DATE_FMT = 'dd/mm/yyyy';
+  const MONEY_COLS_ALL_EJ = MONEY_COLS_ALL.map(c=>c-1);
+  const DATE_COLS_EJ = DATE_COLS.map(c=>c-1);
+  const PROV_COL_EJ = 19 - 1; // Monto Provisionado
+  const ID_COL_EJ = 31 - 1;   // ID
+
+  for(let r=0;r<rows.length;r++){
+    const excelRow = r+2;
+    MONEY_COLS_ALL_EJ.forEach(c=>{
+      const cell = ws.getCell(excelRow, c);
+      if(typeof cell.value==='number'){ cell.numFmt = (c===PROV_COL_EJ) ? PROV_FMT : MONEY_FMT; }
     });
-    if(filas[r-1][35]){ // provisionForzadaCero
-      const ref = XLSX.utils.encode_cell({r, c: PROV_COL});
-      const cell = ws[ref];
-      if(cell) cell.z = FORZADO_FMT;
+    if(filas[r][33]){ // provisionForzadaCero
+      const cell = ws.getCell(excelRow, PROV_COL_EJ);
+      cell.numFmt = FORZADO_FMT;
+      cell.font = { color:{argb:'FFB91C1C'}, bold:true };
+      cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFBE8E6'} };
     }
-    DATE_COLS.forEach(c=>{
-      const ref = XLSX.utils.encode_cell({r, c: c-2});
-      const cell = ws[ref];
-      if(cell && cell.v instanceof Date){ cell.t='d'; cell.z = DATE_FMT; }
+    DATE_COLS_EJ.forEach(c=>{
+      const cell = ws.getCell(excelRow, c);
+      if(cell.value instanceof Date) cell.numFmt = DATE_FMT;
     });
-    // ID -> hipervínculo a MyBig
-    const idRef = XLSX.utils.encode_cell({r, c: ID_COL});
-    const idCell = ws[idRef];
-    if(idCell && idCell.v!==null && idCell.v!==undefined && idCell.v!==''){
-      const idNum = parseInt(idCell.v, 10);
-      idCell.l = {Target: mybigUrl(idNum), Tooltip: 'Abrir en MyBig'};
+    const idCell = ws.getCell(excelRow, ID_COL_EJ);
+    if(idCell.value!==null && idCell.value!==undefined && idCell.value!==''){
+      const idNum = parseInt(idCell.value, 10);
+      idCell.value = { text: String(idCell.value), hyperlink: mybigUrl(idNum), tooltip: 'Abrir en MyBig' };
+      idCell.font = { color:{argb:'FF3699FF'}, underline:true };
     }
   }
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Reporte CENCOSUD');
-  return wb;
+  ws.views = [{ state:'frozen', ySplit:1 }];
+  return wb.xlsx.writeBuffer();
 }
 
-function actualizarDescarga(filas, prevMap){
-  const wbOut = construirWorkbookSalida(filas, prevMap);
-  const wbout = XLSX.write(wbOut, {bookType:'xlsx', type:'array'});
-  const blob = new Blob([wbout], {type:'application/octet-stream'});
+async function actualizarDescarga(filas, prevMap){
+  const buffer = await construirWorkbookSalida(filas, prevMap);
+  const blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   const url = URL.createObjectURL(blob);
   document.getElementById('descargar').href = url;
 }
